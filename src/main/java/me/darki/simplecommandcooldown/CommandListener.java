@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class CommandListener implements Listener {
+
     final private ConcurrentHashMap<Pair<Player, String>, Long> cooldownMap;
     final private ReentrantLock mutex = new ReentrantLock();
 
@@ -21,8 +22,9 @@ public class CommandListener implements Listener {
         cooldownMap = new ConcurrentHashMap<>();
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onCommand(PlayerCommandPreprocessEvent event) {
+
         Player player = event.getPlayer();
         String commandName = event.getMessage().split(" ")[0];
 
@@ -48,11 +50,14 @@ public class CommandListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
+
         Player player = event.getPlayer();
 
         for (Map.Entry<Pair<Player, String>, Long> entry : this.cooldownMap.entrySet()) {
             if (entry.getKey().getKey() == player)
                 this.cooldownMap.remove(entry.getKey());
         }
+
     }
+
 }
