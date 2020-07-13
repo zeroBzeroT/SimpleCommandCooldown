@@ -1,6 +1,5 @@
 package me.darki.simplecommandcooldown;
 
-import javafx.util.Pair;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -9,50 +8,74 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class CommandListener implements Listener {
-    final private ConcurrentHashMap<Pair<Player, String>, Long> cooldownMap;
-    final private ReentrantLock mutex = new ReentrantLock();
+
+    final private ConcurrentHashMap<Data, Long> cooldownMap;
 
     public CommandListener() {
         cooldownMap = new ConcurrentHashMap<>();
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onCommand(PlayerCommandPreprocessEvent event) {
+
         Player player = event.getPlayer();
         String commandName = event.getMessage().split(" ")[0];
+        Data data = new Data(player.getUniqueId(), commandName);
 
-        Pair<Player, String> pair = new Pair<>(player, commandName);
-
-        try {
-            this.mutex.lock();
-
-            if (this.cooldownMap.containsKey(pair)) {
-                if (System.currentTimeMillis() - this.cooldownMap.get(pair) > SimpleCommandCooldown.cooldown) {
-                    this.cooldownMap.remove(pair);
-                } else {
-                    player.sendMessage(ChatColor.RED + "Please wait a bit before using this command again!");
-                    event.setCancelled(true);
-                }
-            } else {
-                this.cooldownMap.put(pair, System.currentTimeMillis());
-            }
-        } finally {
-            this.mutex.unlock();
+        if (!cooldownMap.containsKey(data) || System.currentTimeMillis() - cooldownMap.get(data) > SimpleCommandCooldown.cooldown) {
+            // off cooldown
+            cooldownMap.put(data, System.currentTimeMillis());
+        } else {
+            // on cooldown
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + SimpleCommandCooldown.message);
         }
+
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-
-        for (Map.Entry<Pair<Player, String>, Long> entry : this.cooldownMap.entrySet()) {
-            if (entry.getKey().getKey() == player)
-                this.cooldownMap.remove(entry.getKey());
-        }
+        cooldownMap.forEach((data, timeout) -> {
+            if (data.getUuid().equals(event.getPlayer().getUniqueId())) {
+                cooldownMap.remove(data);
+            }
+        });
     }
+
+    public static class Data {
+
+        private final UUID uuid;
+        private final String command;
+
+        public Data(UUID uuid, String command) {
+            this.uuid = uuid;
+            this.command = command;
+        }
+
+        public UUID getUuid() {
+            return uuid;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Data data = (Data) o;
+            if (!uuid.equals(data.uuid)) return false;
+            return command.equals(data.command);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = uuid.hashCode();
+            result = 31 * result + command.hashCode();
+            return result;
+        }
+
+    }
+
 }
