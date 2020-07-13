@@ -51,14 +51,10 @@ public class CommandListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
-
-        Player player = event.getPlayer();
-
         for (Map.Entry<AbstractMap.SimpleEntry<Player, String>, Long> entry : this.cooldownMap.entrySet()) {
-            if (entry.getKey().getKey() == player)
+            if (entry.getKey().getKey() == event.getPlayer())
                 this.cooldownMap.remove(entry.getKey());
         }
-
     }
 
 }
