@@ -35,15 +35,16 @@ public class CommandListener implements Listener {
 
             mutex.lock();
 
-            if (cooldownMap.containsKey(pair)) {
-                if (System.currentTimeMillis() - cooldownMap.get(pair) > SimpleCommandCooldown.cooldown) {
-                    cooldownMap.remove(pair);
-                } else {
-                    player.sendMessage(ChatColor.RED + "Please wait a bit before using this command again!");
-                    event.setCancelled(true);
-                }
-            } else {
+            if (!cooldownMap.containsKey(pair)) {
                 cooldownMap.put(pair, System.currentTimeMillis());
+                return;
+            }
+
+            if (System.currentTimeMillis() - cooldownMap.get(pair) > SimpleCommandCooldown.cooldown) {
+                cooldownMap.remove(pair);
+            } else {
+                player.sendMessage(ChatColor.RED + "Please wait a bit before using this command again!");
+                event.setCancelled(true);
             }
 
         } finally {
