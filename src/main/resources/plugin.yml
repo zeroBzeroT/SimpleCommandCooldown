@@ -1,0 +1,5 @@
+name: SimpleCommandCooldown
+version: 1.0
+main: me.darki.simplecommandcooldown.SimpleCommandCooldown
+api-version: 1.13
+authors: [Darki, bierdosenhalter]
