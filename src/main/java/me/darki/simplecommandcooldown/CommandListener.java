@@ -29,33 +29,27 @@ public class CommandListener implements Listener {
         String commandName = event.getMessage().split(" ")[0];
         Data data = new Data(player.getUniqueId(), commandName);
 
-        try {
+        mutex.lock();
 
-            mutex.lock();
-
-            if (!cooldownMap.containsKey(data)) {
-                cooldownMap.put(data, System.currentTimeMillis());
-                return;
-            }
-
-            if (System.currentTimeMillis() - cooldownMap.get(data) > SimpleCommandCooldown.cooldown) {
-                cooldownMap.remove(data);
-            } else {
-                player.sendMessage(ChatColor.RED + "Please wait a bit before using this command again!");
-                event.setCancelled(true);
-            }
-
-        } finally {
-            mutex.unlock();
+        if (!cooldownMap.containsKey(data) || System.currentTimeMillis() - cooldownMap.get(data) > SimpleCommandCooldown.cooldown) {
+            // command off cooldown
+            cooldownMap.put(data, System.currentTimeMillis());
+        } else {
+            // command on fresh cooldown
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "Please wait a bit before using this command again!");
         }
+
+        mutex.unlock();
 
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         cooldownMap.forEach((data, timeout) -> {
-            if (data.getUuid().equals(event.getPlayer().getUniqueId()))
+            if (data.getUuid().equals(event.getPlayer().getUniqueId())) {
                 cooldownMap.remove(data);
+            }
         });
     }
 
@@ -73,8 +67,20 @@ public class CommandListener implements Listener {
             return uuid;
         }
 
-        public String getCommand() {
-            return command;
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Data data = (Data) o;
+            if (!uuid.equals(data.uuid)) return false;
+            return command.equals(data.command);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = uuid.hashCode();
+            result = 31 * result + command.hashCode();
+            return result;
         }
 
     }
