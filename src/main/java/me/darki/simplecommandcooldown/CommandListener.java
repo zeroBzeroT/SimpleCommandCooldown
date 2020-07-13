@@ -10,16 +10,13 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class CommandListener implements Listener {
 
     final private ConcurrentHashMap<Data, Long> cooldownMap;
-    final private ReentrantLock mutex;
 
     public CommandListener() {
         cooldownMap = new ConcurrentHashMap<>();
-        mutex = new ReentrantLock();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -29,18 +26,14 @@ public class CommandListener implements Listener {
         String commandName = event.getMessage().split(" ")[0];
         Data data = new Data(player.getUniqueId(), commandName);
 
-        mutex.lock();
-
         if (!cooldownMap.containsKey(data) || System.currentTimeMillis() - cooldownMap.get(data) > SimpleCommandCooldown.cooldown) {
-            // command off cooldown
+            // off cooldown
             cooldownMap.put(data, System.currentTimeMillis());
         } else {
-            // command on fresh cooldown
+            // on cooldown
             event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "Please wait a bit before using this command again!");
+            player.sendMessage(ChatColor.RED + SimpleCommandCooldown.message);
         }
-
-        mutex.unlock();
 
     }
 
