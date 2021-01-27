@@ -2,4 +2,4 @@ name: SimpleCommandCooldown
 version: 1.1
 main: me.darki.simplecommandcooldown.SimpleCommandCooldown
 api-version: 1.15
-authors: [Darki, bierdosenhalter, blockparole]
+authors: [Darki, bierdosenhalter, nothub]
